@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.dependencies import get_db, get_current_user
-from app.schemas.response import ResponseSchema
+from app.schemas.http.response import ResponseSchema
 from app.schemas.comment.comment import CommentCreate
 from app.services.comment.comment import (
     create_video_comment,

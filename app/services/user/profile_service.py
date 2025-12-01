@@ -86,7 +86,7 @@ async def get_user_profile_with_stats(db: AsyncSession, user: User) -> UserProfi
     )
 
 async def change_password(db, user, old_password: str, new_password: str):
-    from app.core.security import verify_password, hash_password
+    from app.utils.security import verify_password, hash_password
     if not verify_password(old_password, user.password):
         raise ValueError("旧密码错误")
     user.password = hash_password(new_password)

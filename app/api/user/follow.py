@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db, get_current_user
-from app.schemas.response import ResponseSchema
+from app.schemas.http.response import ResponseSchema
 from app.schemas.user.follow import FollowRequest, FollowStatusResponse, FansCountResponse, FollowingCountResponse, FollowListResponse
 from app.services.user.follow_service import (
     toggle_follow_service, is_following_service, get_fans_count_service, get_following_count_service,

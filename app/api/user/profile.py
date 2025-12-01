@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.mysql import get_db
 from app.crud import update_user_profile
-from app.schemas.response import ResponseSchema
+from app.schemas.http.response import ResponseSchema
 from app.schemas.user.profile import UserProfileResponse, UserProfileUpdate
 from app.models.mysql.user import User
 from app.dependencies import get_current_user

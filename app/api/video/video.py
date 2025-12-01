@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db, get_current_user
-from app.schemas.response import ResponseSchema
+from app.schemas.http.response import ResponseSchema
 from app.services import get_my_video_list, get_recommended_videos
 from app.services.video.video import get_video_detail, get_latest_videos, get_hot_videos
 

@@ -6,7 +6,7 @@ from app.models.mysql.watch_history import WatchHistory
 from app.models.mysql.video import Video
 
 from app.dependencies import get_db, get_current_user
-from app.schemas.response import ResponseSchema
+from app.schemas.http.response import ResponseSchema
 from app.services.analytics.analytics import (
     get_user_watch_history,
     get_popular_videos,
