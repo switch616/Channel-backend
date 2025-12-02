@@ -21,7 +21,7 @@ from app.services.video.video import get_my_video_list
 router = APIRouter()
 
 
-@router.get("/profile", response_model=UserProfileResponse)
+@router.get("/profile", response_model=ResponseSchema[UserProfileResponse])
 async def get_user_profile(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -31,7 +31,8 @@ async def get_user_profile(
     - 查询基础信息 + 视频上传总数
     - 用于个人中心数据展示
     """
-    return await get_user_profile_with_stats(db, current_user)
+    user_profile = await get_user_profile_with_stats(db, current_user)
+    return ResponseSchema.success(data=user_profile)
 
 
 @router.get("/profile/{user_id}", response_model=ResponseSchema)
