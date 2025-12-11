@@ -116,7 +116,7 @@ async def recalculate_reply_counts(
     """重新计算视频所有评论的回复数量（临时API）"""
     try:
         from app.crud.comment.comment import get_comment_reply_count
-        from app.models.comment import Comment
+        from app.models.mysql.comment import Comment
         
         # 获取视频的所有评论
         result = await db.execute(
