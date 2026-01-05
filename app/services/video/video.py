@@ -7,7 +7,7 @@ from app.core import settings
 from app.utils.file_validator import validate_video, validate_image
 from app.storage.local import save_file_to_local
 from app.schemas.video import VideoCreate, MyVideoListOut, RecommendVideoOut
-from app.crud.video import create_video, get_my_videos, get_recommend_video_list, get_video_by_id, get_latest_video_list, get_hot_video_list
+from app.crud.video import create_video, get_my_videos, get_recommend_video_list, get_video_by_id, get_latest_video_list, get_hot_video_list,delete_video
 from app.crud.user.user import get_user_by_id
 from sqlalchemy import select, func
 from app.models.mysql.like import Like
@@ -19,6 +19,7 @@ from app.models.mysql.video import Video
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from app.services.user.follow_service import is_following_service, get_fans_count_service
+from app.schemas.http.response import BizCode
 
 # 视频文件存储目录
 VIDEO_DIR = os.path.join(settings.MEDIA_ROOT, "videos")
@@ -338,7 +339,7 @@ async def get_following_feed_videos(db: AsyncSession, user_id: int, page: int, s
     # 2. 查询这些用户的视频
     skip = (page - 1) * size
     from sqlalchemy import select, desc
-    from app.models.video import Video
+    from app.models.mysql.video import Video
     from sqlalchemy.orm import joinedload
     stmt = (
         select(Video)
@@ -350,26 +351,38 @@ async def get_following_feed_videos(db: AsyncSession, user_id: int, page: int, s
     )
     result = await db.execute(stmt)
     videos = result.scalars().unique().all()
-    # 3. 组装返回
-    def video_to_dict(video):
-        return {
-            'id': video.id,
-            'title': video.title,
-            'description': video.description,
-            'file_path': video.file_path,
-            'cover_image': video.cover_image,
-            'duration': video.duration,
-            'uploader_id': video.uploader_id,
-            'uploader_username': getattr(video.uploader, 'username', None) if hasattr(video, 'uploader') else None,
-            'is_public': video.is_public,
-            'is_deleted': video.is_deleted,
-            'view_count': video.view_count,
-            'like_count': video.like_count,
-            'collect_count': video.collect_count,
-            'comment_count': video.comment_count,
-            'created_at': video.created_at,
-            'updated_at': video.updated_at,
-        }
     items = [video_to_dict(v) for v in videos]
     # 总数可选查一次
     return {"total": len(items), "items": items}
+
+async def remove_video(
+    db: AsyncSession,
+    video_id: int,
+    current_user_id: int,
+):
+    stmt = select(Video).where(Video.id == video_id, Video.is_deleted == False)
+    result = await db.execute(stmt)
+    video = result.scalars().first()
+
+    if not video:
+        return False, BizCode.NOT_FOUND, "视频不存在或已删除"
+
+    if video.uploader_id != current_user_id:
+        return False, BizCode.PERMISSION_DENIED, "无权限删除该视频"
+
+    video.is_deleted = True
+    video.is_public = False
+    await db.commit()
+
+    try:
+        await log_user_behavior(
+            user_id=current_user_id,
+            action="delete",
+            target_type="video",
+            target_id=video_id,
+            metadata={"title": video.title},
+        )
+    except Exception:
+        pass
+
+    return True, BizCode.SUCCESS, "视频已删除"

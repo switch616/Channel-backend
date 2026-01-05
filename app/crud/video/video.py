@@ -21,8 +21,14 @@ async def count_user_videos(db: AsyncSession, user_id: int) -> int:
 
 # 根据视频ID获取视频详情
 async def get_video_by_id(db: AsyncSession, video_id: int) -> Optional[Video]:
-    result = await db.execute(select(Video).where(Video.id == video_id))
+    result = await db.execute(
+        select(Video).where(
+            Video.id == video_id,
+            Video.is_deleted == False
+        )
+    )
     return result.scalars().first()
+
 
 
 # 获取所有视频（分页，主要用于后台管理）
@@ -62,16 +68,26 @@ async def delete_video(db: AsyncSession, video_id: int) -> bool:
 
 
 # 获取当前用户上传的视频（带分页和上传者信息）
-async def get_my_videos(db: AsyncSession, user_id: int, skip: int, limit: int) -> Tuple[int, List[Video]]:
-    # 查询总数量
-    total_stmt = select(func.count(Video.id)).where(Video.uploader_id == user_id)
+async def get_my_videos(
+    db: AsyncSession,
+    user_id: int,
+    skip: int,
+    limit: int,
+) -> Tuple[int, List[Video]]:
+
+    total_stmt = select(func.count(Video.id)).where(
+        Video.uploader_id == user_id,
+        Video.is_deleted == False
+    )
     total = await db.scalar(total_stmt)
 
-    # 查询视频列表 + 预加载上传者信息
     stmt = (
         select(Video)
-        .options(joinedload(Video.uploader))  # 避免 N+1 查询
-        .where(Video.uploader_id == user_id)
+        .options(joinedload(Video.uploader))
+        .where(
+            Video.uploader_id == user_id,
+            Video.is_deleted == False
+        )
         .offset(skip)
         .limit(limit)
     )
@@ -79,6 +95,7 @@ async def get_my_videos(db: AsyncSession, user_id: int, skip: int, limit: int) -
     video_list = result.scalars().unique().all()
 
     return total, video_list
+
 
 
 # 获取推荐视频列表（公开 + 未删除 + 排序，含分页）

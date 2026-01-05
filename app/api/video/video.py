@@ -8,7 +8,6 @@ from app.services.video.video import get_video_detail, get_latest_videos, get_ho
 
 router = APIRouter()
 
-
 @router.get("/my_list", response_model=ResponseSchema)
 async def my_list(
     page: int = Query(1, ge=1, description="分页页码，从 1 开始"),
@@ -91,3 +90,33 @@ async def following_feed(
     from app.services.video.video import get_following_feed_videos
     data = await get_following_feed_videos(db, current_user.id, page, size)
     return ResponseSchema.success(data=data)
+
+@router.delete("/{video_id}", response_model=ResponseSchema)
+async def delete_video(
+    video_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """
+    删除（下线）当前用户上传的视频
+    - 软删除
+    - 仅允许删除本人视频
+    """
+
+    from app.services.video.video import remove_video
+
+    success, code, msg = await remove_video(
+        db=db,
+        video_id=video_id,
+        current_user_id=current_user.id,
+    )
+
+    if not success:
+        return ResponseSchema.fail(
+            code=code,
+            msg=msg,
+        )
+
+    return ResponseSchema.success(
+        msg=msg,
+    )

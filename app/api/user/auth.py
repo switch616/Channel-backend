@@ -68,7 +68,7 @@ async def login(
             "access_token": access_token,
             "token_type": "bearer",
             "expires_in": access_token_expires.total_seconds(),
-        }
+        },msg="登录成功"
     )
 
 
