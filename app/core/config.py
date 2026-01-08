@@ -71,7 +71,7 @@ class Settings(BaseSettings):
 
     # ========= Test Mode =========
     # 测试模式配置（仅在 APP_ENV=test 时生效）
-    TEST_MODE_MAX_VIDEOS: int = Field(default=10, description="测试模式下每个用户最大视频上传数量")
+    TEST_MODE_MAX_VIDEOS: int = Field(default=5, description="测试模式下每个用户最大视频上传数量")
     TEST_MODE_IP_WHITELIST: str = Field(default="", description="测试模式IP白名单，逗号分隔，留空则不限制")
 
     # ========= Config =========

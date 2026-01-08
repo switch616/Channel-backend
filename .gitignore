@@ -1,0 +1,44 @@
+# ========== 环境变量文件 ==========
+#.env.local
+#.env.production
+#.env.staging
+
+# ========== IDE 和编辑器 ==========
+.idea/
+.idea
+.vscode/
+.gradle/
+build/
+local.properties
+*.iml
+*.ipr
+*.iws
+.DS_Store
+#.gitignore
+
+# ========== Python 相关 ==========
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+*.egg
+*.pyo
+*.db
+*.sqlite3
+*.sqlite
+*.log
+*.bak
+*.swp
+*.swo
+*.pyc
+*.pyd
+*.pyde
+*.pyw
+*.pyt
+*.pyz
+*.pyi
+media
+media/*
+media/videos
