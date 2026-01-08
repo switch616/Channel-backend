@@ -39,7 +39,7 @@ async def send_code_email(email: str, code: str, send_type: str = "register") ->
             port=int(settings.EMAIL_PORT),
             username=settings.EMAIL_HOST_USER,
             password=settings.EMAIL_HOST_PASSWORD,
-            start_tls=settings.EMAIL_USE_TLS.lower() == "true"
+            start_tls=str(settings.EMAIL_USE_TLS).lower() == "true"
         )
         # print(ret)
         return {"result": 0, "errmsg": ""}

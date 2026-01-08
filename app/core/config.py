@@ -1,7 +1,18 @@
 """
 应用配置文件
 使用 pydantic-settings 管理配置
-支持 APP_ENV=dev|test|prod + .env.dev/.env.test/.env.prod
+
+配置加载顺序：
+1. 读取 .env 文件获取 APP_ENV（公共配置）
+2. 根据 APP_ENV 读取对应的 .env.{env} 文件（环境特定配置）
+3. 环境特定配置会覆盖公共配置
+4. 系统环境变量优先级最高（可覆盖文件配置）
+
+文件结构：
+- .env: 公共配置，包含 APP_ENV 环境标识
+- .env.dev: 开发环境特定配置
+- .env.test: 测试环境特定配置
+- .env.prod: 生产环境特定配置
 """
 
 import os
@@ -58,6 +69,11 @@ class Settings(BaseSettings):
     # ========= Log =========
     LOG_LEVEL: str
 
+    # ========= Test Mode =========
+    # 测试模式配置（仅在 APP_ENV=test 时生效）
+    TEST_MODE_MAX_VIDEOS: int = Field(default=10, description="测试模式下每个用户最大视频上传数量")
+    TEST_MODE_IP_WHITELIST: str = Field(default="", description="测试模式IP白名单，逗号分隔，留空则不限制")
+
     # ========= Config =========
     class Config:
         case_sensitive = True
@@ -74,26 +90,37 @@ class Settings(BaseSettings):
     ):
         from dotenv import dotenv_values
 
-        env = os.getenv("APP_ENV", "dev")
+        # 1. 先读取公共 .env 文件获取 APP_ENV
+        base_env_vars = dotenv_values(".env")
+        # 优先使用系统环境变量，其次使用 .env 文件中的值
+        env = os.getenv("APP_ENV") or base_env_vars.get("APP_ENV", "dev")
+        
+        # 2. 读取对应环境的配置文件
         env_file = f".env.{env}"
-
         env_vars = dotenv_values(env_file)
+        
+        # 3. 合并公共配置和环境特定配置（环境特定配置优先）
+        # 先加载公共配置，再加载环境特定配置覆盖
+        merged_vars = {**base_env_vars, **env_vars}
+        
+        # 4. 移除 APP_ENV，因为它只是用来决定加载哪个环境文件的，不是配置项
+        merged_vars.pop("APP_ENV", None)
 
         # JSON 字段手动反序列化
         try:
-            env_vars["WANGYI_EMAIL_TEMPLATE"] = json.loads(
-                env_vars.get("WANGYI_EMAIL_TEMPLATE", "{}")
+            merged_vars["WANGYI_EMAIL_TEMPLATE"] = json.loads(
+                merged_vars.get("WANGYI_EMAIL_TEMPLATE", "{}")
             )
         except Exception:
-            env_vars["WANGYI_EMAIL_TEMPLATE"] = {}
+            merged_vars["WANGYI_EMAIL_TEMPLATE"] = {}
 
         def custom_dotenv_settings():
-            return env_vars
+            return merged_vars
 
         # 顺序 = 优先级（前面的优先）
         return (
             init_settings,
-            custom_dotenv_settings,  # .env.dev / .env.prod
+            custom_dotenv_settings,  # .env + .env.{env}
             env_settings,            # 系统环境变量（可覆盖）
             file_secret_settings,
         )
@@ -132,9 +159,15 @@ class Settings(BaseSettings):
 
     @property
     def media_root_abs(self) -> str:
+        """媒体文件根目录的绝对路径"""
         base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         project_root = os.path.abspath(os.path.join(base_dir, ".."))
         return os.path.join(project_root, self.MEDIA_ROOT)
+    
+    @property
+    def media_root_parent(self) -> str:
+        """媒体文件根目录的绝对路径（别名，保持向后兼容）"""
+        return os.path.abspath(os.path.dirname(self.media_root_abs))
 
 
 # ========= 全局唯一实例 =========

@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 from app.core.config import settings
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
@@ -13,12 +13,25 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# 读取 .env 文件
-load_dotenv()
+# 1. 先读取公共 .env 文件获取 APP_ENV
+base_env_vars = dotenv_values(".env")
+# 优先使用系统环境变量，其次使用 .env 文件中的值
+app_env = os.getenv("APP_ENV") or base_env_vars.get("APP_ENV", "dev")
+
+# 2. 读取对应环境的配置文件
+env_file = f".env.{app_env}"
+load_dotenv(env_file)  # 加载环境特定配置
+
+# 3. 也加载公共 .env（公共配置会被环境特定配置覆盖）
+load_dotenv(".env", override=False)
+
 # 替换 alembic 的 config
 config.set_main_option("sqlalchemy.url", settings.SYNC_DATABASE_URL)
 
+# 导入 Base 和所有模型，确保所有表都被注册到 metadata 中
+# 注意：必须先导入 Base，然后导入所有模型文件
 from app.models.mysql import Base
+
 target_metadata = Base.metadata
 
 

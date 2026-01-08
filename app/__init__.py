@@ -13,6 +13,7 @@ def create_app():
     add_trace_middleware(app)
     # add_exception_handler(app)
     add_logging_middleware(app)
+    add_test_mode_middleware(app)  # 测试模式中间件
     # 通过 api_router 注册所有子路由
     app.include_router(api_router_v1)
     app.mount(f"{api_router_v1.prefix}/media", StaticFiles(directory="media"), name="media")

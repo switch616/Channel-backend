@@ -57,13 +57,13 @@ async def save_user_video(
     # 生成视频文件名与路径
     ext_video = os.path.splitext(video_file.filename)[-1]
     video_filename = f"video_{uploader_id}_{uuid4().hex}{ext_video}"
-    video_relative_path = os.path.join("media/videos", video_filename)
+    video_relative_path = os.path.join(settings.MEDIA_ROOT,os.path.join("videos", video_filename))
     video_full_path = os.path.join(settings.media_root_parent, video_relative_path)
 
     # 生成封面文件名与路径
     ext_cover = os.path.splitext(cover_file.filename)[-1]
     cover_filename = f"cover_{uploader_id}_{uuid4().hex}{ext_cover}"
-    cover_relative_path = os.path.join("media/covers", cover_filename)
+    cover_relative_path = os.path.join(settings.MEDIA_ROOT,os.path.join("covers", cover_filename))
     cover_full_path = os.path.join(settings.media_root_parent, cover_relative_path)
 
     # 异步保存视频和封面到本地存储
@@ -92,7 +92,7 @@ async def save_user_video(
     await create_video(db, video_data, uploader_id)
 
     # 返回视频URL路径
-    return f"{settings.MEDIA_URL.rstrip('/')}/{video_relative_path}"
+    return f"{video_relative_path}"
 
 
 async def get_my_video_list(db: AsyncSession, user_id: int, page: int, size: int = 20):
